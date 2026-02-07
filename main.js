@@ -23,30 +23,38 @@ function randGray(min=0, max=255) {
     return `rgb(${v},${v},${v})`;
 }
 
-function getURL(img) { 
+function getUrl(img) { 
     const data = btoa(img);
     const url = `data:image/svg+xml;base64,${data}`;
     return url
+}
+
+function createSvgUrl(w, h, data) {
+    const padding = 4;
+    let img = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" 
+viewBox="-${padding} -${padding} ${w+padding*2} ${h+padding*2}">
+${data}
+</svg>
+`
+    return getUrl(img);
 }
 
 function generateJitterBorder(w, h, width=1) {
     const x1 = 0, y1 = 0, x2 = w, y2 = 0, x3 = w, y3 = h, x4 = 0, y4 = h;
 
     function stroke(x1, y1, x2, y2) {
-        jmax = 7;
+        jmax = 10;
         let j1, j2, j3, j4;
         j1 = jitter(jmax); j2 = jitter(jmax); j3 = jitter(jmax); j4 = jitter(jmax); 
         return `<path d="M ${x1+j3} ${y1+j3} C ${x1+j1} ${y1+j1}, ${x2+j2} ${y2+j2}, ${x2+j4} ${y2+j4}" 
-        stroke="url(#e)" stroke-width="${width}" fill="none" />`
+        stroke="url(#e)" stroke-width="${width}" fill="none"/>`
 
     }
-    const padding = 3;
 
     const grad1 = randInt(0, 100);
     const grad2 = randInt(0, 100);
     let img = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" 
-viewBox="-${padding} -${padding} ${w+padding*2} ${h+padding*2}">
 <defs>
     <linearGradient id="e" x1="${grad1}%" y1="${grad1}%" x2="${grad2}%" y2="${grad2}%" gradientUnits="userSpaceOnUse">
         <stop stop-color="black" offset="0" />
@@ -58,8 +66,6 @@ viewBox="-${padding} -${padding} ${w+padding*2} ${h+padding*2}">
     img += stroke(x2, y2, x3, y3)
     img += stroke(x3, y3, x4, y4)
     img += stroke(x4, y4, x1, y1)
-
-    img += '</svg>'
 
     return img;
 }
@@ -123,11 +129,14 @@ function setImgSrc() {
     imgElem.src = url;
 }
 
-function setBtnBorder(elem) {
+function setBtnBorder(elem, strokeWidth) {
     const w = elem.clientWidth;
     const h = elem.clientHeight;
-    let img = generateJitterBorder(w, h);
-    let url = getURL(img)
+    let img = generateJitterBorder(w, h, strokeWidth);
+    let borders = elem.dataset.borders ?? "";
+    borders += img;
+    elem.dataset.borders = borders;
+    let url = createSvgUrl(w, h, borders);
     elem.style.setProperty("border-image-source", `url("${url}")`);
     elem.style.setProperty("border-image-width", "10px");    
     elem.style.setProperty("border-image-slice", "10");
@@ -139,12 +148,11 @@ function setBtnBackground(elem) {
     const w = elem.clientWidth;
     const h = elem.clientHeight;
     const img = generateJitterBackground(w, h);
-    const url = getURL(img)
+    const url = getUrl(img)
     elem.style.setProperty("background-image", `url("${url}")`)
     elem.style.setProperty("background-repeat", "no-repeat")
     elem.style.setProperty("background-color", "unset")
     elem.style.setProperty("background-size", "contain")
-    
 }
 
 function setBtnPosition(elem) {
@@ -164,9 +172,9 @@ function drawBorders() {
         //})
         elem.addEventListener("click", (evt) => {
             //evt.stopPropagation();
-            setBtnBorder(evt.currentTarget)
-            setBtnBackground(elem);
-            setBtnPosition(elem);
+            setBtnBorder(evt.currentTarget, 0.3)
+            //setBtnBackground(elem);
+            //setBtnPosition(elem);
         })
     })
 }
