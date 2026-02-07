@@ -14,7 +14,8 @@ body {
 
 button {
     padding: 10px;
+    background-color: #cccccc;
+    border-width: 0px;
+    outline-width: 0px;
 }
-
-
 
